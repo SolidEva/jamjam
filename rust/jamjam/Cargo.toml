@@ -16,6 +16,13 @@ leptos_meta = { version = "0.8.0" }
 tokio = { version = "1", features = ["rt-multi-thread"], optional = true }
 wasm-bindgen = { version = "0.2.126", optional = true }
 wasm-bindgen-shared = { version = "0.2.126"}
+futures = "0.3.34"
+gloo-net = "0.7.0"
+send_wrapper = "0.6.0"
+broadcaster = "1.0.0"
+tracing = "0.1.44"
+bytes = "1.12.1"
+futures-util = "0.3.34"
 
 [features]
 hydrate = [
