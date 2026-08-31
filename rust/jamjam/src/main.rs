@@ -17,6 +17,7 @@ async fn counter_events() -> Sse<impl Stream<Item = Result<Event, Infallible>>> 
     let stream = futures::stream::once(async { get_server_count().await.unwrap_or(0) })
         .chain(COUNT_CHANNEL.clone())
         .map(|value| Ok(Event::default().data(format!("event: message\ndata: {value}\n\n"))));
+
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
@@ -41,7 +42,6 @@ async fn main() {
         // so we need to register it explicitly
         .route("/api/events", get(counter_events))
         .leptos_routes(&leptos_options, routes, {
-            let leptos_options = leptos_options.clone();
             move || shell(leptos_options.clone())
         })
         .fallback(leptos_axum::file_and_error_handler(shell))

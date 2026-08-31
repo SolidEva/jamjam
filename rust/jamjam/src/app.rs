@@ -136,9 +136,6 @@ pub fn MultiuserCounter() -> impl IntoView {
         ret
     };
 
-    #[cfg(feature = "ssr")]
-    let (multiplayer_value, _) = signal(None::<i32>);
-
     view! {
         <div>
             <h2>"Multi-User Counter"</h2>
