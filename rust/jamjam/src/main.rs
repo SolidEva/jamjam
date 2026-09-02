@@ -42,6 +42,7 @@ async fn main() {
         // so we need to register it explicitly
         .route("/api/events", get(counter_events))
         .leptos_routes(&leptos_options, routes, {
+            let leptos_options = leptos_options.clone();
             move || shell(leptos_options.clone())
         })
         .fallback(leptos_axum::file_and_error_handler(shell))
