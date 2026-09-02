@@ -82,20 +82,6 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 pub fn Counters() -> impl IntoView {
     view! {
         <Router>
-            <header>
-                <h1>"Server-Side Counters"</h1>
-                <p>"Each of these counters stores its data in the same variable on the server."</p>
-                <p>
-                    "The value is shared across connections. Try opening this is another browser tab to see what I mean."
-                </p>
-            </header>
-            <nav>
-                <ul>
-                    <li>
-                        <A href="multi">"Multi-User"</A>
-                    </li>
-                </ul>
-            </nav>
             <main>
                 <FlatRoutes fallback=|| "Counter Not found.">
                     <Route path=StaticSegment("multi") view=MultiuserCounter/>
@@ -140,6 +126,20 @@ pub fn MultiuserCounter() -> impl IntoView {
     let (multiplayer_value, _) = signal(None::<i32>);
 
     view! {
+            <header>
+                <h1>"Server-Side Counters"</h1>
+                <p>"Each of these counters stores its data in the same variable on the server."</p>
+                <p>
+                    "The value is shared across connections. Try opening this is another browser tab to see what I mean."
+                </p>
+            </header>
+            <nav>
+                <ul>
+                    <li>
+                        <A href="/">"Multi-User"</A>
+                    </li>
+                </ul>
+            </nav>
         <div>
             <h2>"Multi-User Counter"</h2>
             <p>
