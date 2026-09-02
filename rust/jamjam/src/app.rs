@@ -83,8 +83,8 @@ pub fn Counters() -> impl IntoView {
     view! {
         <Router>
             <main>
-                <FlatRoutes fallback=|| "Counter Not found.">
-                    <Route path=StaticSegment("multi") view=MultiuserCounter/>
+                <FlatRoutes fallback=|| "Not found.">
+                    <Route path=StaticSegment("/") view=MultiuserCounter/>
                 </FlatRoutes>
             </main>
         </Router>
