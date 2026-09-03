@@ -81,6 +81,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 #[component]
 pub fn Counters() -> impl IntoView {
     view! {
+        <Stylesheet id="leptos" href="/pkg/jamjam.css"/>
         <Router>
             <main>
                 <FlatRoutes fallback=|| "Not found.">
