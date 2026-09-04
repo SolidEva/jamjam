@@ -70,6 +70,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 />
                 <AutoReload options=options.clone()/>
                 <HydrationScripts options=options.clone()/>
+                <MetaTags/>
             </head>
             <body>
                 <Counters/>
@@ -80,6 +81,8 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 
 #[component]
 pub fn Counters() -> impl IntoView {
+    // Provides context that manages stylesheets, titles, meta tags, etc.
+    provide_meta_context();
     view! {
         <Stylesheet id="leptos" href="/pkg/jamjam.css"/>
         <Router>
