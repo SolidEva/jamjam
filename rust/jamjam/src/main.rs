@@ -7,6 +7,8 @@ use futures_util::stream::Stream;
 #[cfg(feature = "ssr")]
 use std::convert::Infallible;
 
+use console_error_panic_hook;
+
 #[cfg(feature = "ssr")]
 async fn counter_events() -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     use app::get_server_count;
@@ -30,6 +32,9 @@ async fn main() {
     use leptos::logging::log;
     use leptos::prelude::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
+
+    // get useful errors https://book.leptos.dev/getting_started/leptos_dx.html
+    console_error_panic_hook::set_once();
 
     let conf = get_configuration(None).unwrap();
     let addr = conf.leptos_options.site_addr;
