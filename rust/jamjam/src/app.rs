@@ -130,13 +130,44 @@ pub fn MultiuserCounter() -> impl IntoView {
     let (multiplayer_value, _) = signal(None::<i32>);
 
     view! {
-            <header>
+        <header>
+            <div class="welcome">
+                <div>
+                    <a href="http://picasion.com/gl/mhp3">
+                        <img src="http://i.picasion.com/gl/93/mhp3.gif" width="350" height="59" border="0" alt="glitter maker"> </img>
+                    </a>
+                    <p>"welcome to music heaven :3"</p>
+                </div>
+                <div>
+                    <p>"plz join the party! ⸜(｡˃ ᵕ ˂ )⸝♡"</p>
+                    <div>
+                        <input type="search" id="site-search" name="q" />
+                        <button on:click=move |_| { clear.dispatch(()); }>"check this sick beat!"</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <main>
+        <div class="booty">
+            <p class="separator">"currently playing!!!!"</p>
+            <div class="sidecontainer">
+                <div class="songinfo">
+                    <p>"song:  "</p>
+                    <p>"artist:"</p>
+                </div>
+                <div class="boykisser">
+                    <a href="/gif/boykisser-dance-wFwDKk" title="boykisser dance">
+                        <img src="https://i.makeagif.com/media/5-29-2024/wFwDKk.gif" width="140" height="100" border="0" alt="boykisser dance"></img></a>
+                </div>
+            </div>
+            <div>
+                <p class="separator">"queued music"</p>
                 <h1>"Server-Side Counters"</h1>
                 <p>"Each of these counters stores its data in the same variable on the server."</p>
                 <p>
                     "The value is shared across connections. Try opening this is another browser tab to see what I mean."
                 </p>
-            </header>
+            </div>
             <nav>
                 <ul>
                     <li>
@@ -144,20 +175,22 @@ pub fn MultiuserCounter() -> impl IntoView {
                     </li>
                 </ul>
             </nav>
-        <div>
-            <h2>"Multi-User Counter"</h2>
-            <p>
-                "This one uses server-sent events (SSE) to live-update when other users make changes."
-            </p>
             <div>
-                <button on:click=move |_| { clear.dispatch(()); }>"Clear"</button>
-                <button on:click=move |_| { dec.dispatch(()); }>"-1"</button>
-                <span>
-                    "Multiplayer Value: " {move || multiplayer_value.get().unwrap_or_default()}
-                </span>
-                <button on:click=move |_| { inc.dispatch(()); }>"+1"</button>
+                <h2>"Multi-User Counter"</h2>
+                <p>
+                    "This one uses server-sent events (SSE) to live-update when other users make changes."
+                </p>
+                <div>
+                    <button on:click=move |_| { clear.dispatch(()); }>"Clear"</button>
+                    <button on:click=move |_| { dec.dispatch(()); }>"-1"</button>
+                    <span>
+                        "Multiplayer Value: " {move || multiplayer_value.get().unwrap_or_default()}
+                    </span>
+                    <button on:click=move |_| { inc.dispatch(()); }>"+1"</button>
+                </div>
             </div>
         </div>
+        </main>
     }
 }
 

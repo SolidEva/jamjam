@@ -1,4 +1,49 @@
 body {
 	font-family: sans-serif;
 	text-align: center;
+	background-color: white;
+	background-image: url("https://gelli.moe/pink-white-paws.png");
+	//background-blend-mode: lighten;
+	background-size: 70%;
+	background-repeat: repeat;
+}
+header p {
+	margin: 0px;
+}
+.separator {
+	text-align: left;
+  height: 20px;
+  background-color: pink;
+  border: outset #ef78a6 2px;
+  border-radius: 35px;
+  width: 96%;
+	margin: 10px;
+  padding: 5px;
+} 
+
+div.booty {
+	margin: 10px 50px 10px;
+}
+
+div.sidecontainer {
+	padding: 0px 30px 0px;
+	width: 93%;
+	overflow: auto;
+}
+
+.songinfo p {
+	margin: 0px 0px 30px 0px;
+}
+.songinfo {
+	padding: 0px 10px 0px;
+	text-align: left;
+	width: 70%;
+	float: left;
+}
+
+.boykisser {
+	padding: 0px 10px 0px;
+	text-align: left;
+	width: 20%;
+	float: left;
 }
