@@ -1,4 +1,5 @@
 mod app;
+mod deezer;
 
 #[cfg(feature = "ssr")]
 use axum::response::sse::{Event, KeepAlive, Sse};
