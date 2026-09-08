@@ -1,4 +1,5 @@
 use leptos::prelude::*;
+use leptos::web_sys::SubmitEvent;
 use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
 use leptos_router::{
     components::{FlatRoutes, Route, Router, A},
@@ -89,10 +90,25 @@ pub fn Counters() -> impl IntoView {
             <main>
                 <FlatRoutes fallback=|| "Not found.">
                     <Route path=StaticSegment("/") view=MultiuserCounter/>
+                    <Route path=StaticSegment("/search") view=SearchResult/>
                 </FlatRoutes>
             </main>
         </Router>
     }
+}
+
+#[component]
+pub fn SearchResult() -> impl IntoView {
+    view! {
+        <p>"barf!"</p>
+    }
+}
+
+#[server]
+#[cfg_attr(feature = "ssr", instrument)]
+pub async fn search_query(query: String) -> Result<(), ServerFnError> {
+    leptos_axum::redirect("/search");
+    Ok(())
 }
 
 // This is a kind of "multi-user" counter
@@ -126,6 +142,29 @@ pub fn MultiuserCounter() -> impl IntoView {
         ret
     };
 
+    let (song_search, set_name) = signal("".to_string());
+    let input_element: NodeRef<leptos::html::Input> = NodeRef::new();
+    let song_query = Action::new(|query: &String| search_query(query.to_string()));
+
+    let on_submit = move |ev: SubmitEvent| {
+        // stop the page from reloading!
+        ev.prevent_default();
+
+        // here, we'll extract the value from the input
+        let value = input_element
+            .get()
+            // event handlers can only fire after the view
+            // is mounted to the DOM, so the `NodeRef` will be `Some`
+            .expect("<input> should be mounted")
+            // `leptos::HtmlElement<html::Input>` implements `Deref`
+            // to a `web_sys::HtmlInputElement`.
+            // this means we can call`HtmlInputElement::value()`
+            // to get the current value of the input
+            .value();
+        set_name.set(value.clone());
+        song_query.dispatch(value);
+    };
+
     #[cfg(feature = "ssr")]
     let (multiplayer_value, _) = signal(None::<i32>);
 
@@ -141,8 +180,13 @@ pub fn MultiuserCounter() -> impl IntoView {
                 <div>
                     <p>"plz join the party! ⸜(｡˃ ᵕ ˂ )⸝♡"</p>
                     <div>
-                        <input type="search" id="site-search" name="q" />
-                        <button on:click=move |_| { clear.dispatch(()); }>"check this sick beat!"</button>
+                        <form on:submit=on_submit> // on_submit defined below
+                            <input type="text"
+                                value=song_search
+                                node_ref=input_element
+                            />
+                            <input type="submit" value="check this sick beat!"/>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -152,7 +196,7 @@ pub fn MultiuserCounter() -> impl IntoView {
             <p class="separator">"currently playing!!!!"</p>
             <div class="sidecontainer">
                 <div class="songinfo">
-                    <p>"song:  "</p>
+                    <p>"song:  " {song_search}</p>
                     <p>"artist:"</p>
                 </div>
                 <div class="boykisser">
