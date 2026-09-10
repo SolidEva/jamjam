@@ -2,7 +2,7 @@ use leptos::prelude::*;
 use leptos::web_sys::SubmitEvent;
 use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
 use leptos_router::{
-    components::{FlatRoutes, ParentRoute, Route, Router, A},
+    components::{FlatRoutes, Route, Router, A},
     params::Params,
     StaticSegment,
 };
@@ -105,7 +105,28 @@ pub struct Song {
     album: String,
 }
 
-pub fn query_songs() {}
+// TODO: EVA USE THIS TO RETURN SONGS
+pub fn query_songs(query: String) -> Vec<Song> {
+    let mut result: Vec<Song> = Vec::new();
+    for i in 0i8..10 {
+        let num = i.to_string();
+        let mut name = query.clone();
+        name.push_str(&num);
+        let mut artist = "artist".to_string();
+        artist.push_str(&num);
+        let mut album = "album".to_string();
+        album.push_str(&num);
+
+        let temp_song = Song {
+            id: i as u32,
+            name: name,
+            artist: artist,
+            album: album,
+        };
+        result.push(temp_song);
+    }
+    result
+}
 
 use leptos_router::components::Form;
 use leptos_router::hooks::{query_signal, use_query};
@@ -129,24 +150,8 @@ pub fn SearchResult() -> impl IntoView {
         })
     };
 
-    let mut result: Vec<Song> = Vec::new();
-    for i in 0i8..10 {
-        let num = i.to_string();
-        let mut name = q();
-        name.push_str(&num);
-        let mut artist = "artist".to_string();
-        artist.push_str(&num);
-        let mut album = "album".to_string();
-        album.push_str(&num);
+    let result = query_songs(q());
 
-        let temp_song = Song {
-            id: i as u32,
-            name: name,
-            artist: artist,
-            album: album,
-        };
-        result.push(temp_song);
-    }
     view! {
         <p>{q()}</p>
         // read out the URL query strings
