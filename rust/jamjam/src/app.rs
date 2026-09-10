@@ -2,7 +2,7 @@ use leptos::prelude::*;
 use leptos::web_sys::SubmitEvent;
 use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
 use leptos_router::{
-    components::{FlatRoutes, Route, Router, A},
+    components::{FlatRoutes, ParentRoute, Route, Router, A},
     StaticSegment,
 };
 
@@ -97,17 +97,125 @@ pub fn Counters() -> impl IntoView {
     }
 }
 
+pub struct Song {
+    id: u32,
+    name: String,
+    artist: String,
+    album: String,
+}
+
+use leptos_router::components::Form;
+use leptos_router::hooks::{query_signal, use_query_map};
+
 #[component]
 pub fn SearchResult() -> impl IntoView {
+    // reactive access to URL query
+    let query = use_query_map();
+    let name = move || query.read().get("name").unwrap_or_default();
+    let number = move || query.read().get("number").unwrap_or_default();
+    let select = move || query.read().get("select").unwrap_or_default();
+
     view! {
-        <p>"barf!"</p>
+        // read out the URL query strings
+        <table>
+            <tr>
+                <td><code>"name"</code></td>
+                <td>{name}</td>
+            </tr>
+            <tr>
+                <td><code>"number"</code></td>
+                <td>{number}</td>
+            </tr>
+            <tr>
+                <td><code>"select"</code></td>
+                <td>{select}</td>
+            </tr>
+        </table>
+        // <Form/> will navigate whenever submitted
+        <h2>"Manual Submission"</h2>
+        <Form method="GET" action="">
+            // input names determine query string key
+            <input type="text" name="name" value=name/>
+            <input type="number" name="number" value=number/>
+            <select name="select">
+                // `selected` will set which starts as selected
+                <option selected=move || select() == "A">
+                    "A"
+                </option>
+                <option selected=move || select() == "B">
+                    "B"
+                </option>
+                <option selected=move || select() == "C">
+                    "C"
+                </option>
+            </select>
+            // submitting should cause a client-side
+            // navigation, not a full reload
+            <input type="submit"/>
+        </Form>
+        // This <Form/> uses some JavaScript to submit
+        // on every input
+        <h2>"Automatic Submission"</h2>
+        <Form method="GET" action="">
+            <input
+                type="text"
+                name="name"
+                value=name
+                // this oninput attribute will cause the
+                // form to submit on every input to the field
+                oninput="this.form.requestSubmit()"
+            />
+            <input
+                type="number"
+                name="number"
+                value=number
+                oninput="this.form.requestSubmit()"
+            />
+            <select name="select"
+                onchange="this.form.requestSubmit()"
+            >
+                <option selected=move || select() == "A">
+                    "A"
+                </option>
+                <option selected=move || select() == "B">
+                    "B"
+                </option>
+                <option selected=move || select() == "C">
+                    "C"
+                </option>
+            </select>
+            // submitting should cause a client-side
+            // navigation, not a full reload
+            <input type="submit"/>
+        </Form>
     }
 }
 
 #[server]
 #[cfg_attr(feature = "ssr", instrument)]
 pub async fn search_query(query: String) -> Result<(), ServerFnError> {
-    leptos_axum::redirect("/search");
+    let mut result: Vec<Song> = Vec::new();
+    for i in 0i8..10 {
+        let mut num = i.to_string();
+        let mut name = query.clone();
+        name.push_str(&num);
+        let mut artist = "artist".to_string();
+        artist.push_str(&num);
+        let mut album = "album".to_string();
+        album.push_str(&num);
+
+        let temp_song = Song {
+            id: i as u32,
+            name: name,
+            artist: artist,
+            album: album,
+        };
+        result.push(temp_song);
+    }
+
+    let mut url = String::from("/search?q=");
+    url.push_str(&query);
+    leptos_axum::redirect(&url);
     Ok(())
 }
 
