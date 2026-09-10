@@ -1,7 +1,9 @@
 use leptos::prelude::*;
+use leptos::web_sys::SubmitEvent;
 use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
 use leptos_router::{
     components::{FlatRoutes, Route, Router, A},
+    params::Params,
     StaticSegment,
 };
 
@@ -89,10 +91,151 @@ pub fn Counters() -> impl IntoView {
             <main>
                 <FlatRoutes fallback=|| "Not found.">
                     <Route path=StaticSegment("/") view=MultiuserCounter/>
+                    <Route path=StaticSegment("/search") view=SearchResult/>
                 </FlatRoutes>
             </main>
         </Router>
     }
+}
+
+pub struct Song {
+    id: u32,
+    name: String,
+    artist: String,
+    album: String,
+}
+
+// TODO: EVA USE THIS TO RETURN SONGS
+pub fn query_songs(query: String) -> Vec<Song> {
+    let mut result: Vec<Song> = Vec::new();
+    for i in 0i8..10 {
+        let num = i.to_string();
+        let mut name = query.clone();
+        name.push_str(&num);
+        let mut artist = "artist".to_string();
+        artist.push_str(&num);
+        let mut album = "album".to_string();
+        album.push_str(&num);
+
+        let temp_song = Song {
+            id: i as u32,
+            name: name,
+            artist: artist,
+            album: album,
+        };
+        result.push(temp_song);
+    }
+    result
+}
+
+use leptos_router::components::Form;
+use leptos_router::hooks::{query_signal, use_query};
+
+#[derive(Params, PartialEq)]
+struct SongSearch {
+    q: String,
+}
+
+#[component]
+pub fn SearchResult() -> impl IntoView {
+    // reactive access to URL query
+    let query = use_query::<SongSearch>();
+
+    let q = move || {
+        query.with(|query| {
+            query
+                .as_ref()
+                .map(|query| query.q.clone())
+                .unwrap_or_default()
+        })
+    };
+
+    let result = query_songs(q());
+
+    view! {
+        <p>{q()}</p>
+        // read out the URL query strings
+        // <table>
+        //     <tr>
+        //         <td><code>"name"</code></td>
+        //         <td>{name}</td>
+        //     </tr>
+        //     <tr>
+        //         <td><code>"number"</code></td>
+        //         <td>{number}</td>
+        //     </tr>
+        //     <tr>
+        //         <td><code>"select"</code></td>
+        //         <td>{select}</td>
+        //     </tr>
+        // </table>
+        // // <Form/> will navigate whenever submitted
+        // <h2>"Manual Submission"</h2>
+        // <Form method="GET" action="">
+        //     // input names determine query string key
+        //     <input type="text" name="name" value=name/>
+        //     <input type="number" name="number" value=number/>
+        //     <select name="select">
+        //         // `selected` will set which starts as selected
+        //         <option selected=move || select() == "A">
+        //             "A"
+        //         </option>
+        //         <option selected=move || select() == "B">
+        //             "B"
+        //         </option>
+        //         <option selected=move || select() == "C">
+        //             "C"
+        //         </option>
+        //     </select>
+        //     // submitting should cause a client-side
+        //     // navigation, not a full reload
+        //     <input type="submit"/>
+        // </Form>
+        // // This <Form/> uses some JavaScript to submit
+        // // on every input
+        // <h2>"Automatic Submission"</h2>
+        // <Form method="GET" action="">
+        //     <input
+        //         type="text"
+        //         name="name"
+        //         value=name
+        //         // this oninput attribute will cause the
+        //         // form to submit on every input to the field
+        //         oninput="this.form.requestSubmit()"
+        //     />
+        //     <input
+        //         type="number"
+        //         name="number"
+        //         value=number
+        //         oninput="this.form.requestSubmit()"
+        //     />
+        //     <select name="select"
+        //         onchange="this.form.requestSubmit()"
+        //     >
+        //         <option selected=move || select() == "A">
+        //             "A"
+        //         </option>
+        //         <option selected=move || select() == "B">
+        //             "B"
+        //         </option>
+        //         <option selected=move || select() == "C">
+        //             "C"
+        //         </option>
+        //     </select>
+        //     // submitting should cause a client-side
+        //     // navigation, not a full reload
+        //     <input type="submit"/>
+        // </Form>
+    }
+}
+
+#[server]
+#[cfg_attr(feature = "ssr", instrument)]
+pub async fn query_redirect(query: String) -> Result<(), ServerFnError> {
+    let mut url = String::from("/search?q=");
+    url.push_str(&query);
+    leptos_axum::redirect(&url);
+    Ok(())
 }
 
 // This is a kind of "multi-user" counter
@@ -126,6 +269,29 @@ pub fn MultiuserCounter() -> impl IntoView {
         ret
     };
 
+    let (song_search, set_name) = signal("".to_string());
+    let input_element: NodeRef<leptos::html::Input> = NodeRef::new();
+    let song_query = Action::new(|query: &String| query_redirect(query.to_string()));
+
+    let on_submit = move |ev: SubmitEvent| {
+        // stop the page from reloading!
+        ev.prevent_default();
+
+        // here, we'll extract the value from the input
+        let value = input_element
+            .get()
+            // event handlers can only fire after the view
+            // is mounted to the DOM, so the `NodeRef` will be `Some`
+            .expect("<input> should be mounted")
+            // `leptos::HtmlElement<html::Input>` implements `Deref`
+            // to a `web_sys::HtmlInputElement`.
+            // this means we can call`HtmlInputElement::value()`
+            // to get the current value of the input
+            .value();
+        set_name.set(value.clone());
+        song_query.dispatch(value);
+    };
+
     #[cfg(feature = "ssr")]
     let (multiplayer_value, _) = signal(None::<i32>);
 
@@ -141,8 +307,13 @@ pub fn MultiuserCounter() -> impl IntoView {
                 <div>
                     <p>"plz join the party! ⸜(｡˃ ᵕ ˂ )⸝♡"</p>
                     <div>
-                        <input type="search" id="site-search" name="q" />
-                        <button on:click=move |_| { clear.dispatch(()); }>"check this sick beat!"</button>
+                        <form on:submit=on_submit> // on_submit defined below
+                            <input type="text"
+                                value=song_search
+                                node_ref=input_element
+                            />
+                            <input type="submit" value="check this sick beat!"/>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -152,7 +323,7 @@ pub fn MultiuserCounter() -> impl IntoView {
             <p class="separator">"currently playing!!!!"</p>
             <div class="sidecontainer">
                 <div class="songinfo">
-                    <p>"song:  "</p>
+                    <p>"song:  " {song_search}</p>
                     <p>"artist:"</p>
                 </div>
                 <div class="boykisser">
