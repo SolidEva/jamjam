@@ -3,6 +3,7 @@ use leptos::web_sys::SubmitEvent;
 use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
 use leptos_router::{
     components::{FlatRoutes, ParentRoute, Route, Router, A},
+    params::Params,
     StaticSegment,
 };
 
@@ -104,100 +105,34 @@ pub struct Song {
     album: String,
 }
 
+pub fn query_songs() {}
+
 use leptos_router::components::Form;
-use leptos_router::hooks::{query_signal, use_query_map};
+use leptos_router::hooks::{query_signal, use_query};
 
 #[component]
 pub fn SearchResult() -> impl IntoView {
-    // reactive access to URL query
-    let query = use_query_map();
-    let name = move || query.read().get("name").unwrap_or_default();
-    let number = move || query.read().get("number").unwrap_or_default();
-    let select = move || query.read().get("select").unwrap_or_default();
-
-    view! {
-        // read out the URL query strings
-        <table>
-            <tr>
-                <td><code>"name"</code></td>
-                <td>{name}</td>
-            </tr>
-            <tr>
-                <td><code>"number"</code></td>
-                <td>{number}</td>
-            </tr>
-            <tr>
-                <td><code>"select"</code></td>
-                <td>{select}</td>
-            </tr>
-        </table>
-        // <Form/> will navigate whenever submitted
-        <h2>"Manual Submission"</h2>
-        <Form method="GET" action="">
-            // input names determine query string key
-            <input type="text" name="name" value=name/>
-            <input type="number" name="number" value=number/>
-            <select name="select">
-                // `selected` will set which starts as selected
-                <option selected=move || select() == "A">
-                    "A"
-                </option>
-                <option selected=move || select() == "B">
-                    "B"
-                </option>
-                <option selected=move || select() == "C">
-                    "C"
-                </option>
-            </select>
-            // submitting should cause a client-side
-            // navigation, not a full reload
-            <input type="submit"/>
-        </Form>
-        // This <Form/> uses some JavaScript to submit
-        // on every input
-        <h2>"Automatic Submission"</h2>
-        <Form method="GET" action="">
-            <input
-                type="text"
-                name="name"
-                value=name
-                // this oninput attribute will cause the
-                // form to submit on every input to the field
-                oninput="this.form.requestSubmit()"
-            />
-            <input
-                type="number"
-                name="number"
-                value=number
-                oninput="this.form.requestSubmit()"
-            />
-            <select name="select"
-                onchange="this.form.requestSubmit()"
-            >
-                <option selected=move || select() == "A">
-                    "A"
-                </option>
-                <option selected=move || select() == "B">
-                    "B"
-                </option>
-                <option selected=move || select() == "C">
-                    "C"
-                </option>
-            </select>
-            // submitting should cause a client-side
-            // navigation, not a full reload
-            <input type="submit"/>
-        </Form>
+    #[derive(Params, PartialEq)]
+    struct SongSearch {
+        q: String,
     }
-}
 
-#[server]
-#[cfg_attr(feature = "ssr", instrument)]
-pub async fn search_query(query: String) -> Result<(), ServerFnError> {
+    // reactive access to URL query
+    let query = use_query::<SongSearch>();
+
+    let q = move || {
+        query.with(|query| {
+            query
+                .as_ref()
+                .map(|query| query.q.clone())
+                .unwrap_or_default()
+        })
+    };
+
     let mut result: Vec<Song> = Vec::new();
     for i in 0i8..10 {
-        let mut num = i.to_string();
-        let mut name = query.clone();
+        let num = i.to_string();
+        let mut name = q();
         name.push_str(&num);
         let mut artist = "artist".to_string();
         artist.push_str(&num);
@@ -212,7 +147,86 @@ pub async fn search_query(query: String) -> Result<(), ServerFnError> {
         };
         result.push(temp_song);
     }
+    view! {
+        <p>{q()}</p>
+        // read out the URL query strings
+        // <table>
+        //     <tr>
+        //         <td><code>"name"</code></td>
+        //         <td>{name}</td>
+        //     </tr>
+        //     <tr>
+        //         <td><code>"number"</code></td>
+        //         <td>{number}</td>
+        //     </tr>
+        //     <tr>
+        //         <td><code>"select"</code></td>
+        //         <td>{select}</td>
+        //     </tr>
+        // </table>
+        // // <Form/> will navigate whenever submitted
+        // <h2>"Manual Submission"</h2>
+        // <Form method="GET" action="">
+        //     // input names determine query string key
+        //     <input type="text" name="name" value=name/>
+        //     <input type="number" name="number" value=number/>
+        //     <select name="select">
+        //         // `selected` will set which starts as selected
+        //         <option selected=move || select() == "A">
+        //             "A"
+        //         </option>
+        //         <option selected=move || select() == "B">
+        //             "B"
+        //         </option>
+        //         <option selected=move || select() == "C">
+        //             "C"
+        //         </option>
+        //     </select>
+        //     // submitting should cause a client-side
+        //     // navigation, not a full reload
+        //     <input type="submit"/>
+        // </Form>
+        // // This <Form/> uses some JavaScript to submit
+        // // on every input
+        // <h2>"Automatic Submission"</h2>
+        // <Form method="GET" action="">
+        //     <input
+        //         type="text"
+        //         name="name"
+        //         value=name
+        //         // this oninput attribute will cause the
+        //         // form to submit on every input to the field
+        //         oninput="this.form.requestSubmit()"
+        //     />
+        //     <input
+        //         type="number"
+        //         name="number"
+        //         value=number
+        //         oninput="this.form.requestSubmit()"
+        //     />
+        //     <select name="select"
+        //         onchange="this.form.requestSubmit()"
+        //     >
+        //         <option selected=move || select() == "A">
+        //             "A"
+        //         </option>
+        //         <option selected=move || select() == "B">
+        //             "B"
+        //         </option>
+        //         <option selected=move || select() == "C">
+        //             "C"
+        //         </option>
+        //     </select>
+        //     // submitting should cause a client-side
+        //     // navigation, not a full reload
+        //     <input type="submit"/>
+        // </Form>
+    }
+}
 
+#[server]
+#[cfg_attr(feature = "ssr", instrument)]
+pub async fn query_redirect(query: String) -> Result<(), ServerFnError> {
     let mut url = String::from("/search?q=");
     url.push_str(&query);
     leptos_axum::redirect(&url);
@@ -252,7 +266,7 @@ pub fn MultiuserCounter() -> impl IntoView {
 
     let (song_search, set_name) = signal("".to_string());
     let input_element: NodeRef<leptos::html::Input> = NodeRef::new();
-    let song_query = Action::new(|query: &String| search_query(query.to_string()));
+    let song_query = Action::new(|query: &String| query_redirect(query.to_string()));
 
     let on_submit = move |ev: SubmitEvent| {
         // stop the page from reloading!
