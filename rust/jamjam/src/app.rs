@@ -131,6 +131,30 @@ pub fn query_songs(query: String) -> Vec<Song> {
 use leptos_router::components::Form;
 use leptos_router::hooks::{query_signal, use_query};
 
+#[server]
+#[cfg_attr(feature = "ssr", instrument)]
+pub async fn back_queue(id: u32) -> Result<(), ServerFnError> {
+    println!("add to back of queue: {}", id.to_string());
+    leptos_axum::redirect("/");
+    Ok(())
+}
+
+#[server]
+#[cfg_attr(feature = "ssr", instrument)]
+pub async fn front_queue(id: u32) -> Result<(), ServerFnError> {
+    println!("add to front of queue: {}", id.to_string());
+    leptos_axum::redirect("/");
+    Ok(())
+}
+
+#[server]
+#[cfg_attr(feature = "ssr", instrument)]
+pub async fn play_now(id: u32) -> Result<(), ServerFnError> {
+    println!("play now! {}", id.to_string());
+    leptos_axum::redirect("/");
+    Ok(())
+}
+
 #[component]
 pub fn SearchResult() -> impl IntoView {
     #[derive(Params, PartialEq)]
@@ -175,6 +199,10 @@ pub fn SearchResult() -> impl IntoView {
         song_query.dispatch(value);
     };
 
+    let front_queue = Action::new(|id: &u32| front_queue(*id as u32));
+    let back_queue = Action::new(|id: &u32| back_queue(*id as u32));
+    let play_now = Action::new(|id: &u32| play_now(*id as u32));
+
     view! {
         <header>
             <div class="welcome">
@@ -189,6 +217,8 @@ pub fn SearchResult() -> impl IntoView {
                     <div>
                         <form on:submit=on_submit> // on_submit defined below
                             <input type="text"
+                                placeholder="search here!"
+                                // ""
                                 value=song_search
                                 node_ref=input_element
                             />
@@ -206,9 +236,16 @@ pub fn SearchResult() -> impl IntoView {
             <ul>
                 {result.into_iter()
                     .map(|n| view!
-                        { <div class = "resultbox"><p class="songresult">{n.name}</p>
-                        <div class="artistalbum">
-                        <p class="suppresult">{n.artist}" - "{n.album}</p></div></div> }
+                        { <div class = "resultbox">
+                            <div class="infobox">
+                                <p class="songresult">{n.name}</p>
+                                <div class="artistalbum">
+                                <p class="suppresult">{n.artist}" - "{n.album}</p></div>
+                            </div>
+                            <button class="queuebutt" on:click=move |_| { back_queue.dispatch(n.id.clone()); }>"add to queue!"</button>
+                            <button class="queuebutt" on:click=move |_| { front_queue.dispatch(n.id.clone()); }>"front of queue pls!"</button>
+                            <button class="queuebutt" on:click=move |_| { play_now.dispatch(n.id.clone()); }>"play now!!! :^)"</button>
+                            </div> }
                     )
                     .collect_view()}
             </ul>
@@ -370,6 +407,8 @@ pub fn MultiuserCounter() -> impl IntoView {
                     <div>
                         <form on:submit=on_submit> // on_submit defined below
                             <input type="text"
+                                placeholder= "search here!"
+                                // ""
                                 value=song_search
                                 node_ref=input_element
                             />

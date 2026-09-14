@@ -56,7 +56,14 @@ ul {
 div.resultbox {
 	padding: 0px 30px 10px;
 	width: 93%;
-	//overflow: auto;
+	overflow: auto;
+}
+div.infobox {
+	padding: 0px 0px 0px;
+	margin: 0;
+	text-align: left;
+	width: 30%;
+	float: left;
 }
 p.songresult {
 	font-size: 20px;
@@ -69,12 +76,17 @@ div.artistalbum {
 	padding: 0px 0px 0px;
 	margin: 0;
 	width: 93%;
-	overflow: auto;	
+	//overflow: auto;	
 }
 p.suppresult {
 	padding: 0px 0px 0px;
 	margin: 0;
 	text-align: left;
-	width: 25%;
 	float: left;
 }
+
+button.queuebutt {
+	width: 20%;
+	height: 40;
+}
+
