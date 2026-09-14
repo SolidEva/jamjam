@@ -153,7 +153,18 @@ pub fn SearchResult() -> impl IntoView {
     let result = query_songs(q());
 
     view! {
-        <p>{q()}</p>
+        <p>"song search for: "{q()}</p>
+        // this will just render "012"
+        // or we can wrap them in <li>
+        <ul>
+            {result.into_iter()
+                .map(|n| view!
+                    { <div class = "resultbox"><p class="songresult">{n.name}</p>
+                    <div class="artistalbum">
+                    <p class="suppresult">{n.artist}" - "{n.album}</p></div></div> }
+                )
+                .collect_view()}
+        </ul>
         // read out the URL query strings
         // <table>
         //     <tr>

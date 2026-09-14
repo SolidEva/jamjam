@@ -47,3 +47,29 @@ div.sidecontainer {
 	width: 20%;
 	float: left;
 }
+
+div.resultbox {
+	padding: 0px 30px 10px;
+	width: 93%;
+	//overflow: auto;
+}
+p.songresult {
+	font-size: 20px;
+	font-weight: bold;
+	padding: 0px 0px 0px;
+	margin: 0;
+	text-align: left;
+}
+div.artistalbum {
+	padding: 0px 0px 0px;
+	margin: 0;
+	width: 93%;
+	overflow: auto;	
+}
+p.suppresult {
+	padding: 0px 0px 0px;
+	margin: 0;
+	text-align: left;
+	width: 25%;
+	float: left;
+}
