@@ -152,19 +152,68 @@ pub fn SearchResult() -> impl IntoView {
 
     let result = query_songs(q());
 
+    let (song_search, set_name) = signal("".to_string());
+    let input_element: NodeRef<leptos::html::Input> = NodeRef::new();
+    let song_query = Action::new(|query: &String| query_redirect(query.to_string()));
+
+    let on_submit = move |ev: SubmitEvent| {
+        // stop the page from reloading!
+        ev.prevent_default();
+
+        // here, we'll extract the value from the input
+        let value = input_element
+            .get()
+            // event handlers can only fire after the view
+            // is mounted to the DOM, so the `NodeRef` will be `Some`
+            .expect("<input> should be mounted")
+            // `leptos::HtmlElement<html::Input>` implements `Deref`
+            // to a `web_sys::HtmlInputElement`.
+            // this means we can call`HtmlInputElement::value()`
+            // to get the current value of the input
+            .value();
+        set_name.set(value.clone());
+        song_query.dispatch(value);
+    };
+
     view! {
-        <p>"song search for: "{q()}</p>
-        // this will just render "012"
-        // or we can wrap them in <li>
-        <ul>
-            {result.into_iter()
-                .map(|n| view!
-                    { <div class = "resultbox"><p class="songresult">{n.name}</p>
-                    <div class="artistalbum">
-                    <p class="suppresult">{n.artist}" - "{n.album}</p></div></div> }
-                )
-                .collect_view()}
-        </ul>
+        <header>
+            <div class="welcome">
+                <div>
+                    <a href="/">
+                        <img src="http://i.picasion.com/gl/93/mhp3.gif" width="350" height="59" border="0" alt="glitter maker"> </img>
+                    </a>
+                    <p>"welcome to music heaven :3"</p>
+                </div>
+                <div>
+                    <p>"plz join the party! ⸜(｡˃ ᵕ ˂ )⸝♡"</p>
+                    <div>
+                        <form on:submit=on_submit> // on_submit defined below
+                            <input type="text"
+                                value=song_search
+                                node_ref=input_element
+                            />
+                            <input type="submit" value="check this sick beat!"/>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <a href="/">"go home plzzz"</a>
+        </header>
+        <main>
+            <div class="booty">
+            <p class="separator">"search results"</p>
+            // or we can wrap them in <li>
+            <ul>
+                {result.into_iter()
+                    .map(|n| view!
+                        { <div class = "resultbox"><p class="songresult">{n.name}</p>
+                        <div class="artistalbum">
+                        <p class="suppresult">{n.artist}" - "{n.album}</p></div></div> }
+                    )
+                    .collect_view()}
+            </ul>
+            </div>
+        </main>
         // read out the URL query strings
         // <table>
         //     <tr>
@@ -310,7 +359,8 @@ pub fn MultiuserCounter() -> impl IntoView {
         <header>
             <div class="welcome">
                 <div>
-                    <a href="http://picasion.com/gl/mhp3">
+                    // http://picasion.com/gl/mhp3
+                    <a href="/">
                         <img src="http://i.picasion.com/gl/93/mhp3.gif" width="350" height="59" border="0" alt="glitter maker"> </img>
                     </a>
                     <p>"welcome to music heaven :3"</p>

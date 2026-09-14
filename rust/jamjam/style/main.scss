@@ -18,7 +18,7 @@ header p {
   border-radius: 35px;
   width: 96%;
 	margin: 10px;
-  padding: 5px;
+  padding: 5px 5px 5px 10px;
 } 
 
 div.booty {
@@ -46,6 +46,11 @@ div.sidecontainer {
 	text-align: left;
 	width: 20%;
 	float: left;
+}
+
+ul {
+	margin: 0;
+	padding: 0;
 }
 
 div.resultbox {
