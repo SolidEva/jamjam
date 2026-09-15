@@ -17,9 +17,8 @@ pub struct Deezer {
 
 #[derive(GraphQLQuery)]
 #[graphql(
+    query_path = "src/queries/fragments.graphql"
     schema_path = "src/schema.json",
-    query_path = "src/queries/fragments.graphql",
-    response_derives = "Debug"
 )]
 pub struct PageInfoFields;
 
