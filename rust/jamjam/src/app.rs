@@ -7,6 +7,8 @@ use leptos_router::{
     StaticSegment,
 };
 
+use serde::{Deserialize, Serialize};
+
 #[cfg(feature = "ssr")]
 use tracing::instrument;
 
@@ -98,6 +100,7 @@ pub fn Counters() -> impl IntoView {
     }
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Song {
     id: u32,
     name: String,
@@ -106,6 +109,7 @@ pub struct Song {
 }
 
 // TODO: EVA USE THIS TO RETURN SONGS
+#[allow(dead_code)]
 pub fn query_songs(query: String) -> Vec<Song> {
     let mut result: Vec<Song> = Vec::new();
     for i in 0i8..10 {
@@ -128,7 +132,6 @@ pub fn query_songs(query: String) -> Vec<Song> {
     result
 }
 
-use leptos_router::components::Form;
 use leptos_router::hooks::{query_signal, use_query};
 
 #[server]
@@ -161,24 +164,22 @@ pub fn SearchResult() -> impl IntoView {
     struct SongSearch {
         q: String,
     }
-
     // reactive access to URL query
     let query = use_query::<SongSearch>();
 
-    let q = move || {
-        query.with(|query| {
-            query
-                .as_ref()
-                .map(|query| query.q.clone())
-                .unwrap_or_default()
-        })
+    let search = move || {
+        query
+            .read()
+            .as_ref()
+            .ok()
+            .and_then(|query| Some(query.q.clone()))
+            .unwrap_or_default()
     };
 
-    let result = query_songs(q());
-
-    let (song_search, set_name) = signal("".to_string());
     let input_element: NodeRef<leptos::html::Input> = NodeRef::new();
-    let song_query = Action::new(|query: &String| query_redirect(query.to_string()));
+
+    let (_new_query, set_new_query) = query_signal::<String>("q");
+    let (data, set_data) = signal(query_songs(search()));
 
     let on_submit = move |ev: SubmitEvent| {
         // stop the page from reloading!
@@ -195,8 +196,9 @@ pub fn SearchResult() -> impl IntoView {
             // this means we can call`HtmlInputElement::value()`
             // to get the current value of the input
             .value();
-        set_name.set(value.clone());
-        song_query.dispatch(value);
+
+        set_new_query.set(Some(value.clone()));
+        set_data.set(query_songs(value.clone()));
     };
 
     let front_queue = Action::new(|id: &u32| front_queue(*id as u32));
@@ -215,11 +217,11 @@ pub fn SearchResult() -> impl IntoView {
                 <div>
                     <p>"plz join the party! ⸜(｡˃ ᵕ ˂ )⸝♡"</p>
                     <div>
-                        <form on:submit=on_submit> // on_submit defined below
+                        <form on:submit=on_submit> // on_submit defined above
                             <input type="text"
                                 placeholder="search here!"
                                 // ""
-                                value=song_search
+                                value=search
                                 node_ref=input_element
                             />
                             <input type="submit" value="check this sick beat!"/>
@@ -232,106 +234,36 @@ pub fn SearchResult() -> impl IntoView {
         <main>
             <div class="booty">
             <p class="separator">"search results"</p>
-            // or we can wrap them in <li>
             <ul>
-                {result.into_iter()
-                    .map(|n| view!
-                        { <div class = "resultbox">
-                            <div class="infobox">
-                                <p class="songresult">{n.name}</p>
-                                <div class="artistalbum">
-                                <p class="suppresult">{n.artist}" - "{n.album}</p></div>
-                            </div>
-                            <button class="queuebutt" on:click=move |_| { back_queue.dispatch(n.id.clone()); }>"add to queue!"</button>
-                            <button class="queuebutt" on:click=move |_| { front_queue.dispatch(n.id.clone()); }>"front of queue pls!"</button>
-                            <button class="queuebutt" on:click=move |_| { play_now.dispatch(n.id.clone()); }>"play now!!! :^)"</button>
-                            </div> }
-                    )
-                    .collect_view()}
+            <For
+                each=move || data.get()
+                key=|state|  state.clone()
+                let(child)>
+                    <div class = "resultbox">
+                    <div class="infobox">
+                        <p class="songresult">{child.name}</p>
+                        <div class="artistalbum">
+                        <p class="suppresult">{child.artist}" - "{child.album}</p></div>
+                    </div>
+                    <button class="queuebutt" on:click=move |_| { back_queue.dispatch(child.id.clone()); }>"add to queue!"</button>
+                    <button class="queuebutt" on:click=move |_| { front_queue.dispatch(child.id.clone()); }>"front of queue pls!"</button>
+                    <button class="queuebutt" on:click=move |_| { play_now.dispatch(child.id); }>"play now!!! :^)"</button>
+                    </div>
+            </For>
             </ul>
             </div>
         </main>
-        // read out the URL query strings
-        // <table>
-        //     <tr>
-        //         <td><code>"name"</code></td>
-        //         <td>{name}</td>
-        //     </tr>
-        //     <tr>
-        //         <td><code>"number"</code></td>
-        //         <td>{number}</td>
-        //     </tr>
-        //     <tr>
-        //         <td><code>"select"</code></td>
-        //         <td>{select}</td>
-        //     </tr>
-        // </table>
-        // // <Form/> will navigate whenever submitted
-        // <h2>"Manual Submission"</h2>
-        // <Form method="GET" action="">
-        //     // input names determine query string key
-        //     <input type="text" name="name" value=name/>
-        //     <input type="number" name="number" value=number/>
-        //     <select name="select">
-        //         // `selected` will set which starts as selected
-        //         <option selected=move || select() == "A">
-        //             "A"
-        //         </option>
-        //         <option selected=move || select() == "B">
-        //             "B"
-        //         </option>
-        //         <option selected=move || select() == "C">
-        //             "C"
-        //         </option>
-        //     </select>
-        //     // submitting should cause a client-side
-        //     // navigation, not a full reload
-        //     <input type="submit"/>
-        // </Form>
-        // // This <Form/> uses some JavaScript to submit
-        // // on every input
-        // <h2>"Automatic Submission"</h2>
-        // <Form method="GET" action="">
-        //     <input
-        //         type="text"
-        //         name="name"
-        //         value=name
-        //         // this oninput attribute will cause the
-        //         // form to submit on every input to the field
-        //         oninput="this.form.requestSubmit()"
-        //     />
-        //     <input
-        //         type="number"
-        //         name="number"
-        //         value=number
-        //         oninput="this.form.requestSubmit()"
-        //     />
-        //     <select name="select"
-        //         onchange="this.form.requestSubmit()"
-        //     >
-        //         <option selected=move || select() == "A">
-        //             "A"
-        //         </option>
-        //         <option selected=move || select() == "B">
-        //             "B"
-        //         </option>
-        //         <option selected=move || select() == "C">
-        //             "C"
-        //         </option>
-        //     </select>
-        //     // submitting should cause a client-side
-        //     // navigation, not a full reload
-        //     <input type="submit"/>
-        // </Form>
     }
 }
 
+// used to redirect from the Home page using the search bar
 #[server]
 #[cfg_attr(feature = "ssr", instrument)]
 pub async fn query_redirect(query: String) -> Result<(), ServerFnError> {
     let mut url = String::from("/search?q=");
     url.push_str(&query);
     leptos_axum::redirect(&url);
+    println!("{}", &url.to_string());
     Ok(())
 }
 
@@ -405,7 +337,7 @@ pub fn MultiuserCounter() -> impl IntoView {
                 <div>
                     <p>"plz join the party! ⸜(｡˃ ᵕ ˂ )⸝♡"</p>
                     <div>
-                        <form on:submit=on_submit> // on_submit defined below
+                        <form on:submit=on_submit> // on_submit defined above
                             <input type="text"
                                 placeholder= "search here!"
                                 // ""
@@ -427,7 +359,7 @@ pub fn MultiuserCounter() -> impl IntoView {
                     <p>"artist:"</p>
                 </div>
                 <div class="boykisser">
-                    <a href="/gif/boykisser-dance-wFwDKk" title="boykisser dance">
+                    <a href="/" title="boykisser dance">
                         <img src="https://i.makeagif.com/media/5-29-2024/wFwDKk.gif" width="140" height="100" border="0" alt="boykisser dance"></img></a>
                 </div>
             </div>

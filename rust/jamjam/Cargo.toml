@@ -23,6 +23,7 @@ broadcaster = "1.0.0"
 tracing = "0.1.44"
 bytes = "1.12.1"
 futures-util = "0.3.34"
+serde = { version = "1.0.229", features = ["derive"] }
 
 [features]
 hydrate = [
