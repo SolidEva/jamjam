@@ -29,6 +29,7 @@ fragment TrackFields on Track {
     edges {
       roles
       node {
+        __typename
         ... on Artist {
           id
           name
@@ -76,6 +77,7 @@ fragment AlbumFields on Album {
   contributors(first: 5, roles: [MAIN]) {
     edges {
       node {
+        __typename
         ... on Artist {
           id
           name
@@ -196,6 +198,7 @@ fragment AudiobookFields on Audiobook {
     edges {
       roles
       node {
+        __typename
         ... on Artist {
           id
           name
