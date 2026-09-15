@@ -1,16 +1,45 @@
 use anyhow::{anyhow, Context, Result};
+use graphql_client::{GraphQLQuery, Response};
 use log::{debug, error, info, log_enabled, Level};
 use reqwest::header::{HeaderMap, HeaderValue, COOKIE, USER_AGENT};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 const API_URL: &str = "https://pipe.deezer.com/api";
-const AUTH_URL: &str = "https://auth.deezer.com/login/arl";
+const LOGIN_URL: &str = "https://auth.deezer.com/login/arl";
+const RENEW_URL: &str = "https://auth.deezer.com/login/renew";
 
 #[derive(Clone, Debug)]
 pub struct Deezer {
     client: reqwest::Client,
     arl: String,
+}
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/schema.json",
+    query_path = "src/queries/fragments.graphql",
+    response_derives = "Debug"
+)]
+pub struct PageInfoFields;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/schema.json",
+    query_path = "src/queries/search.graphql",
+    response_derives = "Debug"
+)]
+pub struct SearchQuery;
+
+async fn perform_my_query(variables: union_query::Variables) -> Result<(), Box<dyn Error>> {
+    // this is the important line
+    let request_body = UnionQuery::build_query(variables);
+
+    let client = reqwest::Client::new();
+    let mut res = client.post("/graphql").json(&request_body).send().await?;
+    let response_body: Response<union_query::ResponseData> = res.json().await?;
+    println!("{:#?}", response_body);
+    Ok(())
 }
 
 impl Deezer {
@@ -19,7 +48,7 @@ impl Deezer {
         let magic_params = [("jo", "p"), ("rto", "c"), ("i", "c")];
 
         client
-            .post(AUTH_URL)
+            .post(LOGIN_URL)
             .query(&magic_params)
             .header(reqwest::header::COOKIE, format!("arl={}", arl))
             .send()
@@ -30,6 +59,14 @@ impl Deezer {
     }
 
     async fn refresh_login(self: &mut Self) -> Result<&mut Self> {
+        let magic_params = [("jo", "p"), ("rto", "c"), ("i", "c")];
+
+        self.client
+            .post(RENEW_URL)
+            .query(&magic_params)
+            .send()
+            .await?
+            .error_for_status()?;
         Ok(self)
     }
 
@@ -63,7 +100,7 @@ mod test {
     }
 
     #[cfg(test)]
-    async fn create_test_client() -> Result<Deezer> {
+    async fn _create_client() -> Result<Deezer> {
         init();
         let arl = env::var("DEEZER_ARL")?;
 
@@ -72,13 +109,13 @@ mod test {
 
     #[tokio::test]
     async fn test_create_client() -> Result<()> {
-        create_test_client().await?;
+        _create_client().await?;
         Ok(())
     }
 
     #[tokio::test]
     async fn test_refresh_login() -> Result<()> {
-        let mut deezer = create_test_client().await?;
+        let mut deezer = _create_client().await?;
         deezer.refresh_login().await?;
         Ok(())
     }
