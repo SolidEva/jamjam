@@ -7,6 +7,8 @@ use leptos_router::{
     StaticSegment,
 };
 
+use serde::{Deserialize, Serialize};
+
 #[cfg(feature = "ssr")]
 use tracing::instrument;
 
@@ -98,6 +100,7 @@ pub fn Counters() -> impl IntoView {
     }
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Song {
     id: u32,
     name: String,
@@ -106,6 +109,7 @@ pub struct Song {
 }
 
 // TODO: EVA USE THIS TO RETURN SONGS
+#[allow(dead_code)]
 pub fn query_songs(query: String) -> Vec<Song> {
     let mut result: Vec<Song> = Vec::new();
     for i in 0i8..10 {
@@ -128,113 +132,138 @@ pub fn query_songs(query: String) -> Vec<Song> {
     result
 }
 
-use leptos_router::components::Form;
 use leptos_router::hooks::{query_signal, use_query};
 
-#[derive(Params, PartialEq)]
-struct SongSearch {
-    q: String,
+#[server]
+#[cfg_attr(feature = "ssr", instrument)]
+pub async fn back_queue(id: u32) -> Result<(), ServerFnError> {
+    println!("add to back of queue: {}", id.to_string());
+    leptos_axum::redirect("/");
+    Ok(())
+}
+
+#[server]
+#[cfg_attr(feature = "ssr", instrument)]
+pub async fn front_queue(id: u32) -> Result<(), ServerFnError> {
+    println!("add to front of queue: {}", id.to_string());
+    leptos_axum::redirect("/");
+    Ok(())
+}
+
+#[server]
+#[cfg_attr(feature = "ssr", instrument)]
+pub async fn play_now(id: u32) -> Result<(), ServerFnError> {
+    println!("play now! {}", id.to_string());
+    leptos_axum::redirect("/");
+    Ok(())
 }
 
 #[component]
 pub fn SearchResult() -> impl IntoView {
+    #[derive(Params, PartialEq)]
+    struct SongSearch {
+        q: String,
+    }
     // reactive access to URL query
     let query = use_query::<SongSearch>();
 
-    let q = move || {
-        query.with(|query| {
-            query
-                .as_ref()
-                .map(|query| query.q.clone())
-                .unwrap_or_default()
-        })
+    let search = move || {
+        query
+            .read()
+            .as_ref()
+            .ok()
+            .and_then(|query| Some(query.q.clone()))
+            .unwrap_or_default()
     };
 
-    let result = query_songs(q());
+    let input_element: NodeRef<leptos::html::Input> = NodeRef::new();
+
+    let (_new_query, set_new_query) = query_signal::<String>("q");
+    let (data, set_data) = signal(query_songs(search()));
+
+    let on_submit = move |ev: SubmitEvent| {
+        // stop the page from reloading!
+        ev.prevent_default();
+
+        // here, we'll extract the value from the input
+        let value = input_element
+            .get()
+            // event handlers can only fire after the view
+            // is mounted to the DOM, so the `NodeRef` will be `Some`
+            .expect("<input> should be mounted")
+            // `leptos::HtmlElement<html::Input>` implements `Deref`
+            // to a `web_sys::HtmlInputElement`.
+            // this means we can call`HtmlInputElement::value()`
+            // to get the current value of the input
+            .value();
+
+        set_new_query.set(Some(value.clone()));
+        set_data.set(query_songs(value.clone()));
+    };
+
+    let front_queue = Action::new(|id: &u32| front_queue(*id as u32));
+    let back_queue = Action::new(|id: &u32| back_queue(*id as u32));
+    let play_now = Action::new(|id: &u32| play_now(*id as u32));
 
     view! {
-        <p>{q()}</p>
-        // read out the URL query strings
-        // <table>
-        //     <tr>
-        //         <td><code>"name"</code></td>
-        //         <td>{name}</td>
-        //     </tr>
-        //     <tr>
-        //         <td><code>"number"</code></td>
-        //         <td>{number}</td>
-        //     </tr>
-        //     <tr>
-        //         <td><code>"select"</code></td>
-        //         <td>{select}</td>
-        //     </tr>
-        // </table>
-        // // <Form/> will navigate whenever submitted
-        // <h2>"Manual Submission"</h2>
-        // <Form method="GET" action="">
-        //     // input names determine query string key
-        //     <input type="text" name="name" value=name/>
-        //     <input type="number" name="number" value=number/>
-        //     <select name="select">
-        //         // `selected` will set which starts as selected
-        //         <option selected=move || select() == "A">
-        //             "A"
-        //         </option>
-        //         <option selected=move || select() == "B">
-        //             "B"
-        //         </option>
-        //         <option selected=move || select() == "C">
-        //             "C"
-        //         </option>
-        //     </select>
-        //     // submitting should cause a client-side
-        //     // navigation, not a full reload
-        //     <input type="submit"/>
-        // </Form>
-        // // This <Form/> uses some JavaScript to submit
-        // // on every input
-        // <h2>"Automatic Submission"</h2>
-        // <Form method="GET" action="">
-        //     <input
-        //         type="text"
-        //         name="name"
-        //         value=name
-        //         // this oninput attribute will cause the
-        //         // form to submit on every input to the field
-        //         oninput="this.form.requestSubmit()"
-        //     />
-        //     <input
-        //         type="number"
-        //         name="number"
-        //         value=number
-        //         oninput="this.form.requestSubmit()"
-        //     />
-        //     <select name="select"
-        //         onchange="this.form.requestSubmit()"
-        //     >
-        //         <option selected=move || select() == "A">
-        //             "A"
-        //         </option>
-        //         <option selected=move || select() == "B">
-        //             "B"
-        //         </option>
-        //         <option selected=move || select() == "C">
-        //             "C"
-        //         </option>
-        //     </select>
-        //     // submitting should cause a client-side
-        //     // navigation, not a full reload
-        //     <input type="submit"/>
-        // </Form>
+        <header>
+            <div class="welcome">
+                <div>
+                    <a href="/">
+                        <img src="http://i.picasion.com/gl/93/mhp3.gif" width="350" height="59" border="0" alt="glitter maker"> </img>
+                    </a>
+                    <p>"welcome to music heaven :3"</p>
+                </div>
+                <div>
+                    <p>"plz join the party! ⸜(｡˃ ᵕ ˂ )⸝♡"</p>
+                    <div>
+                        <form on:submit=on_submit> // on_submit defined above
+                            <input type="text"
+                                placeholder="search here!"
+                                // ""
+                                value=search
+                                node_ref=input_element
+                            />
+                            <input type="submit" value="check this sick beat!"/>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <a href="/">"go home plzzz"</a>
+        </header>
+        <main>
+            <div class="booty">
+            <p class="separator">"search results"</p>
+            <ul>
+            <For
+                each=move || data.get()
+                key=|state|  state.clone()
+                let(child)>
+                    <div class = "resultbox">
+                    <div class="infobox">
+                        <p class="songresult">{child.name}</p>
+                        <div class="artistalbum">
+                        <p class="suppresult">{child.artist}" - "{child.album}</p></div>
+                    </div>
+                    <button class="queuebutt" on:click=move |_| { back_queue.dispatch(child.id.clone()); }>"add to queue!"</button>
+                    <button class="queuebutt" on:click=move |_| { front_queue.dispatch(child.id.clone()); }>"front of queue pls!"</button>
+                    <button class="queuebutt" on:click=move |_| { play_now.dispatch(child.id); }>"play now!!! :^)"</button>
+                    </div>
+            </For>
+            </ul>
+            </div>
+        </main>
     }
 }
 
+// used to redirect from the Home page using the search bar
 #[server]
 #[cfg_attr(feature = "ssr", instrument)]
 pub async fn query_redirect(query: String) -> Result<(), ServerFnError> {
     let mut url = String::from("/search?q=");
     url.push_str(&query);
     leptos_axum::redirect(&url);
+    println!("{}", &url.to_string());
     Ok(())
 }
 
@@ -299,7 +328,8 @@ pub fn MultiuserCounter() -> impl IntoView {
         <header>
             <div class="welcome">
                 <div>
-                    <a href="http://picasion.com/gl/mhp3">
+                    // http://picasion.com/gl/mhp3
+                    <a href="/">
                         <img src="http://i.picasion.com/gl/93/mhp3.gif" width="350" height="59" border="0" alt="glitter maker"> </img>
                     </a>
                     <p>"welcome to music heaven :3"</p>
@@ -307,8 +337,10 @@ pub fn MultiuserCounter() -> impl IntoView {
                 <div>
                     <p>"plz join the party! ⸜(｡˃ ᵕ ˂ )⸝♡"</p>
                     <div>
-                        <form on:submit=on_submit> // on_submit defined below
+                        <form on:submit=on_submit> // on_submit defined above
                             <input type="text"
+                                placeholder= "search here!"
+                                // ""
                                 value=song_search
                                 node_ref=input_element
                             />
@@ -327,7 +359,7 @@ pub fn MultiuserCounter() -> impl IntoView {
                     <p>"artist:"</p>
                 </div>
                 <div class="boykisser">
-                    <a href="/gif/boykisser-dance-wFwDKk" title="boykisser dance">
+                    <a href="/" title="boykisser dance">
                         <img src="https://i.makeagif.com/media/5-29-2024/wFwDKk.gif" width="140" height="100" border="0" alt="boykisser dance"></img></a>
                 </div>
             </div>
