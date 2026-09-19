@@ -18,7 +18,7 @@ header p {
   border-radius: 35px;
   width: 96%;
 	margin: 10px;
-  padding: 5px;
+  padding: 5px 5px 5px 10px;
 } 
 
 div.booty {
@@ -47,3 +47,46 @@ div.sidecontainer {
 	width: 20%;
 	float: left;
 }
+
+ul {
+	margin: 0;
+	padding: 0;
+}
+
+div.resultbox {
+	padding: 0px 30px 10px;
+	width: 93%;
+	overflow: auto;
+}
+div.infobox {
+	padding: 0px 0px 0px;
+	margin: 0;
+	text-align: left;
+	width: 30%;
+	float: left;
+}
+p.songresult {
+	font-size: 20px;
+	font-weight: bold;
+	padding: 0px 0px 0px;
+	margin: 0;
+	text-align: left;
+}
+div.artistalbum {
+	padding: 0px 0px 0px;
+	margin: 0;
+	width: 93%;
+	//overflow: auto;	
+}
+p.suppresult {
+	padding: 0px 0px 0px;
+	margin: 0;
+	text-align: left;
+	float: left;
+}
+
+button.queuebutt {
+	width: 20%;
+	height: 40;
+}
+
